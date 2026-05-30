@@ -2,11 +2,15 @@
   "schemaVersion": 1,
   "id": "tier-tagger",
   "version": "${version}",
-  "name": "TierTagger",
-  "description": "Display player's PvP Tiers in their nametag!",
-  "authors": ["uku", "netiyiy (original creator)"],
+  "name": "Arise Tier Tagger",
+  "description": "Official Tier Tagger for Arise PvP. Fetches tiers from Supabase.",
+  "authors": [
+    "vishalmishra789",
+    "uku",
+    "netiyiy"
+  ],
   "contact": {
-    "sources": "https://github.com/mctiers-dev/TierTagger.git"
+    "sources": "https://github.com/vishalmishra789/Atl.git"
   },
   "license": "MPL-2.0",
   "icon": "assets/tier-tagger/icon.png",
