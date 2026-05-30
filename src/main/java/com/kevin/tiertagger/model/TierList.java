@@ -9,8 +9,7 @@ import java.util.Optional;
 @Getter
 @AllArgsConstructor
 public enum TierList {
-    MCTIERS("MCTiers", "https://mctiers.com/api", '\uE901'),
-    SUBTIERS("SubTiers", "https://subtiers.net/api", '\uE902'),
+    ARISE_CORE("AriseCore", "https://zsdtlcyzhcfgcwqucdjd.supabase.co/rest/v1/players", '\uE901'),
     ;
 
     private final String name;
@@ -19,14 +18,12 @@ public enum TierList {
 
     public String styledName(boolean current) {
         String s = icon + " " + name;
-        if (current) s += " (selected)";
+        if (current) s += " (Selected)";
         return s;
     }
 
     public static Optional<TierList> findByUrl(String url) {
-        if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
-
-        final String finalUrl = url; // i :heart: java
-        return Arrays.stream(values()).filter(list -> list.url.equals(finalUrl)).findFirst();
+        String cleanUrl = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        return Arrays.stream(values()).filter(list -> list.url.equals(cleanUrl)).findFirst();
     }
 }
