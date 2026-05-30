@@ -1,12 +1,10 @@
 package com.kevin.tiertagger.model;
 
-import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import com.kevin.tiertagger.TierCache;
 import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.config.TierTaggerConfig;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -15,108 +13,24 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public record PlayerInfo(String uuid, String name, Map<String, Ranking> rankings, String region, int points,
-                         int overall, List<Badge> badges, @SerializedName("combat_master") boolean combatMaster) {
-    public record Ranking(int tier, int pos, @Nullable @SerializedName("peak_tier") Integer peakTier,
-                          @Nullable @SerializedName("peak_pos") Integer peakPos, long attained,
-                          boolean retired) {
+public record PlayerInfo(
+    String uuid, 
+    String ign, 
+    String region, 
+    int points, 
+    Map<String, String> tiers
+) {
 
-        /**
-         * Lower is better.
-         */
-        public int comparableTier() {
-            return tier * 2 + pos;
-        }
-
-        /**
-         * Lower is better.
-         */
-        public int comparablePeak() {
-            if (peakTier == null || peakPos == null) {
-                return Integer.MAX_VALUE;
-            } else {
-                return peakTier * 2 + peakPos;
-            }
-        }
-
-        public NamedRanking asNamed(GameMode mode) {
-            return new NamedRanking(mode, this);
-        }
-    }
-
-    public record NamedRanking(@Nullable GameMode mode, Ranking ranking) {
-    }
-
-    public record Badge(String title, String desc) {
-    }
-
-    private static final Map<String, Integer> REGION_COLORS = Map.of(
-            "NA", 0xff6a6e,
-            "EU", 0x6aff6e,
-            "SA", 0xff9900,
-            "AU", 0xf6b26b,
-            "ME", 0xffd966,
-            "AS", 0xc27ba0,
-            "AF", 0x674ea7
-    );
-
-    public static CompletableFuture<PlayerInfo> get(HttpClient client, UUID uuid) {
-        String endpoint = TierTagger.getManager().getConfig().getApiUrl() + "/v2/profile/" + uuid;
-        final HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint)).GET().build();
-
-        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(s -> TierTagger.GSON.fromJson(s, PlayerInfo.class))
-                .whenComplete((i, t) -> {
-                    if (t != null) TierTagger.getLogger().warn("Error getting player info ({})", uuid, t);
-                });
-    }
-
-    public static CompletableFuture<Map<String, Ranking>> getRankings(HttpClient client, UUID uuid) {
-        String endpoint = TierTagger.getManager().getConfig().getApiUrl() + "/v2/profile/" + uuid + "/rankings";
-        final HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint)).GET().build();
-
-        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(s -> TierTagger.GSON.fromJson(s, new TypeToken<Map<String, Ranking>>() {}))
-                .whenComplete((i, t) -> {
-                    if (t != null) TierTagger.getLogger().warn("Error getting player rankings ({})", uuid, t);
-                });
-    }
-
-    public static CompletableFuture<PlayerInfo> search(HttpClient client, String query) {
-        String endpoint = TierTagger.getManager().getConfig().getApiUrl() + "/v2/profile/by-name/" + query;
-        final HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint)).GET().build();
-
-        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenApply(s -> TierTagger.GSON.fromJson(s, PlayerInfo.class))
-                .whenComplete((i, t) -> {
-                    if (t != null) TierTagger.getLogger().warn("Error searching player {}", query, t);
-                });
-    }
-
-    public int getRegionColor() {
-        return REGION_COLORS.getOrDefault(this.region.toUpperCase(Locale.ROOT), 0xffffff);
-    }
-
-    public static Optional<NamedRanking> getHighestRanking(Map<String, Ranking> rankings) {
-        return rankings.entrySet().stream()
-                .filter(e -> e.getKey() != null)
-                .min(Comparator.comparingInt(e -> e.getValue().comparableTier()))
-                .map(e -> e.getValue().asNamed(TierCache.findModeOrUgly(e.getKey())));
-    }
-
+    // --- YOUR SERVER'S POINT SYSTEM ---
     @Getter
     @AllArgsConstructor
     public enum PointInfo {
-        COMBAT_GRANDMASTER("Combat Grandmaster", 0xE6C622, 0xFDE047),
-        COMBAT_MASTER("Combat Master", 0xFBB03B, 0xFFD13A),
-        COMBAT_ACE("Combat Ace", 0xCD285C, 0xD65474),
-        COMBAT_SPECIALIST("Combat Specialist", 0xAD78D8, 0xC7A3E8),
-        COMBAT_CADET("Combat Cadet", 0x9291D9, 0xADACE2),
-        COMBAT_NOVICE("Combat Novice", 0x9291D9, 0xFFFFFF),
-        ROOKIE("Rookie", 0x6C7178, 0x8B979C),
+        GRANDMASTER("Combat Grandmaster", 0xE6C622, 0xFDE047), // Gold
+        MASTER("Combat Master", 0xFBB03B, 0xFFD13A),           // Orange
+        ELITE("Combat Elite", 0xCD285C, 0xD65474),            // Pink/Red
+        VETERAN("Combat Veteran", 0xAD78D8, 0xC7A3E8),        // Purple
+        APPRENTICE("Apprentice", 0x9291D9, 0xADACE2),         // Blue
+        CADET("Combat Cadet", 0x6C7178, 0x8B979C),            // Gray
         UNRANKED("Unranked", 0xFFFFFF, 0xFFFFFF);
 
         private final String title;
@@ -125,34 +39,83 @@ public record PlayerInfo(String uuid, String name, Map<String, Ranking> rankings
     }
 
     public PointInfo getPointInfo() {
-        if (this.points >= 400) {
-            return PointInfo.COMBAT_GRANDMASTER;
-        } else if (this.points >= 250) {
-            return PointInfo.COMBAT_MASTER;
-        } else if (this.points >= 100) {
-            return PointInfo.COMBAT_ACE;
-        } else if (this.points >= 50) {
-            return PointInfo.COMBAT_SPECIALIST;
-        } else if (this.points >= 20) {
-            return PointInfo.COMBAT_CADET;
-        } else if (this.points >= 10) {
-            return PointInfo.COMBAT_NOVICE;
-        } else if (this.points >= 1) {
-            return PointInfo.ROOKIE;
-        } else {
-            return PointInfo.UNRANKED;
-        }
+        if (this.points >= 280) return PointInfo.GRANDMASTER;
+        if (this.points >= 200) return PointInfo.MASTER;
+        if (this.points >= 120) return PointInfo.ELITE;
+        if (this.points >= 60)  return PointInfo.VETERAN;
+        if (this.points >= 20)  return PointInfo.APPRENTICE;
+        return PointInfo.CADET;
     }
 
-    public List<NamedRanking> getSortedTiers() {
-        List<NamedRanking> tiers = new ArrayList<>(this.rankings.entrySet().stream()
-                .map(e -> e.getValue().asNamed(TierCache.findModeOrUgly(e.getKey())))
-                .toList());
+    // --- REGION COLORS (Kept for AS region support) ---
+    private static final Map<String, Integer> REGION_COLORS = Map.of(
+            "NA", 0xff6a6e, "EU", 0x6aff6e, "SA", 0xff9900,
+            "AU", 0xf6b26b, "ME", 0xffd966, "AS", 0xc27ba0, "AF", 0x674ea7
+    );
 
-        tiers.sort(Comparator.comparing((NamedRanking a) -> a.ranking.retired, Boolean::compare)
-                .thenComparingInt(a -> a.ranking.tier)
-                .thenComparingInt(a -> a.ranking.pos));
+    public int getRegionColor() {
+        return REGION_COLORS.getOrDefault(this.region != null ? this.region.toUpperCase(Locale.ROOT) : "", 0xffffff);
+    }
 
-        return tiers;
+    // --- SUPABASE NETWORK LOGIC ---
+
+    private static HttpRequest createSupabaseRequest(String query) {
+        TierTaggerConfig config = TierTagger.getManager().getConfig();
+        // Updated URL for Supabase filtering
+        String url = config.getApiUrl() + "?" + query;
+        
+        return HttpRequest.newBuilder(URI.create(url))
+                .header("apikey", config.getSupabaseKey())
+                .header("Authorization", "Bearer " + config.getSupabaseKey())
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
+    }
+
+    public static CompletableFuture<PlayerInfo> get(HttpClient client, UUID uuid) {
+        HttpRequest request = createSupabaseRequest("uuid=eq." + uuid.toString());
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    // Supabase returns a List [], so we take the first element
+                    List<PlayerInfo> list = TierTagger.GSON.fromJson(response.body(), new TypeToken<List<PlayerInfo>>(){}.getType());
+                    return (list != null && !list.isEmpty()) ? list.get(0) : null;
+                })
+                .whenComplete((i, t) -> {
+                    if (t != null) TierTagger.getLogger().warn("Error getting player info from Supabase ({})", uuid, t);
+                });
+    }
+
+    public static CompletableFuture<PlayerInfo> search(HttpClient client, String query) {
+        HttpRequest request = createSupabaseRequest("ign=ilike." + query);
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    List<PlayerInfo> list = TierTagger.GSON.fromJson(response.body(), new TypeToken<List<PlayerInfo>>(){}.getType());
+                    return (list != null && !list.isEmpty()) ? list.get(0) : null;
+                });
+    }
+
+    // --- TIER DATA HELPERS ---
+
+    /**
+     * Gets the tier string (e.g. "HT1") for the currently selected gamemode.
+     */
+    public String getTierValue(String gameModeId) {
+        if (this.tiers == null) return null;
+        return this.tiers.get(gameModeId); // Directly returns "HT1", "LT3", etc.
+    }
+
+    // This helper determines which tier is "Highest" based on your point map
+    public static String getHighestTier(Map<String, String> tiers) {
+        Map<String, Integer> weight = Map.of(
+            "HT1", 40, "LT1", 32, "HT2", 24, "LT2", 20, 
+            "HT3", 16, "LT3", 12, "HT4", 8, "LT4", 4, 
+            "HT5", 2, "LT5", 1, "RET", 0
+        );
+
+        return tiers.values().stream()
+                .max(Comparator.comparingInt(t -> weight.getOrDefault(t, -1)))
+                .orElse(null);
     }
 }
