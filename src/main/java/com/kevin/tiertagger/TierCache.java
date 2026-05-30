@@ -10,56 +10,45 @@ import java.util.concurrent.ExecutionException;
 
 public class TierCache {
     private static final List<GameMode> GAMEMODES = new ArrayList<>();
-    private static final Map<UUID, Optional<Map<String, PlayerInfo.Ranking>>> TIERS = new ConcurrentHashMap<>();
+    // Stores UUID -> Map of <Gamemode, TierString>
+    private static final Map<UUID, Optional<Map<String, String>>> TIERS = new ConcurrentHashMap<>();
 
     public static void init() {
         try {
             GAMEMODES.clear();
             GAMEMODES.addAll(GameMode.fetchGamemodes(TierTagger.getClient()).get());
-            TierTagger.getLogger().info("Found {} tierlists: {}", GAMEMODES.size(), GAMEMODES.stream().map(GameMode::id).toList());
-        } catch (ExecutionException e) {
+        } catch (ExecutionException | InterruptedException e) {
             TierTagger.getLogger().error("Failed to load gamemodes!", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
     }
 
     public static List<GameMode> getGamemodes() {
-        if (GAMEMODES.isEmpty()) {
-            return Collections.singletonList(GameMode.NONE);
-        } else {
-            return GAMEMODES;
-        }
+        return GAMEMODES.isEmpty() ? Collections.singletonList(GameMode.NONE) : GAMEMODES;
     }
 
-    public static Optional<Map<String, PlayerInfo.Ranking>> getPlayerRankings(UUID uuid) {
+    public static Optional<Map<String, String>> getPlayerRankings(UUID uuid) {
         return TIERS.computeIfAbsent(uuid, u -> {
-            if (uuid.version() == 4) {
-                PlayerInfo.getRankings(TierTagger.getClient(), uuid).thenAccept(info -> TIERS.put(uuid, Optional.ofNullable(info)));
-            }
-
+            PlayerInfo.get(TierTagger.getClient(), uuid).thenAccept(info -> {
+                if (info != null) {
+                    TIERS.put(uuid, Optional.ofNullable(info.tiers()));
+                }
+            });
             return Optional.empty();
         });
     }
 
     public static CompletableFuture<PlayerInfo> searchPlayer(String query) {
         return PlayerInfo.search(TierTagger.getClient(), query).thenApply(p -> {
-            UUID uuid = parseUUID(p.uuid());
-            TIERS.put(uuid, Optional.of(p.rankings()));
+            if (p != null) {
+                UUID uuid = parseUUID(p.uuid());
+                TIERS.put(uuid, Optional.ofNullable(p.tiers()));
+            }
             return p;
         });
     }
 
     public static void clearCache() {
         TIERS.clear();
-    }
-
-    public static GameMode findNextMode(GameMode current) {
-        if (GAMEMODES.isEmpty()) {
-            return GameMode.NONE;
-        } else {
-            return GAMEMODES.get((GAMEMODES.indexOf(current) + 1) % GAMEMODES.size());
-        }
     }
 
     public static Optional<GameMode> findMode(String id) {
@@ -70,16 +59,10 @@ public class TierCache {
         return findMode(id).orElseGet(() -> new GameMode(id, id));
     }
 
-    private static UUID parseUUID(String uuid) {
-        try {
-            return UUID.fromString(uuid);
-        } catch (Exception e) {
-            long mostSignificant = Long.parseUnsignedLong(uuid.substring(0, 16), 16);
-            long leastSignificant = Long.parseUnsignedLong(uuid.substring(16), 16);
-            return new UUID(mostSignificant, leastSignificant);
-        }
+    private static UUID parseUUID(String uuidStr) {
+        if (uuidStr.contains("-")) return UUID.fromString(uuidStr);
+        return UUID.fromString(uuidStr.replaceFirst("(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5"));
     }
 
-    private TierCache() {
-    }
+    private TierCache() {}
 }
