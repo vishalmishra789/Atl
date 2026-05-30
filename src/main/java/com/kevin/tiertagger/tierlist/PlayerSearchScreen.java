@@ -28,19 +28,17 @@ import java.util.function.Supplier;
 public class PlayerSearchScreen extends CloseableScreen {
     private TextInputWidget textField;
     private ButtonWidget searchButton;
-
     private boolean searching = false;
 
     public PlayerSearchScreen(Screen parent) {
-        super("Player Search", parent);
+        super(Text.of("Player Search"), parent);
     }
 
     @Override
     protected void init() {
-        String username = I18n.translate("tiertagger.search.user");
+        String usernameHint = I18n.translate("tiertagger.search.user");
         this.textField = this.addSelectableChild(new TextInputWidget(this.width / 2 - 100, 116, 200, 20,
-                "", s -> {
-        }, username, s -> s.matches("[a-zA-Z0-9_-]+"), 32));
+                "", s -> {}, usernameHint, s -> s.matches("[a-zA-Z0-9_-]+"), 32));
 
         this.searchButton = this.addDrawableChild(
                 ButtonWidget.builder(Text.translatable("tiertagger.search"), button -> this.loadAndShowProfile())
@@ -68,26 +66,32 @@ public class PlayerSearchScreen extends CloseableScreen {
         this.searching = true;
         this.searchButton.setMessage(Text.translatable("tiertagger.search.loading"));
 
-        YggdrasilAuthenticationService service = ((MinecraftClientAccessor) MinecraftClient.getInstance()).getAuthenticationService();
-        ApiServices services = ApiServices.create(service, MinecraftClient.getInstance().runDirectory);
+        MinecraftClient client = MinecraftClient.getInstance();
+        YggdrasilAuthenticationService service = ((MinecraftClientAccessor) client).getAuthenticationService();
+        ApiServices services = ApiServices.create(service, client.runDirectory);
 
+        // 1. Fetch the Minecraft Skin asynchronously
         CompletableFuture<PlayerSkinWidget> skinFuture = fetchProfile(username, services).thenApply(p -> {
             GameProfile profile = Optional.ofNullable(services.sessionService().fetchProfile(p.getId(), true))
                     .map(ProfileResult::profile)
-                    .orElseGet(() -> new GameProfile(UUID.randomUUID(), username));
+                    .orElseGet(() -> new GameProfile(p.getId(), username));
 
-            Supplier<SkinTextures> skinSupplier = MinecraftClient.getInstance().getSkinProvider().getSkinTexturesSupplier(profile);
-            PlayerSkinWidget skin = new PlayerSkinWidget(60, 144, MinecraftClient.getInstance().getLoadedEntityModels(), skinSupplier);
-            skin.setPosition(this.width / 2 - 65, (this.height - 144) / 2);
+            Supplier<SkinTextures> skinSupplier = client.getSkinProvider().getSkinTexturesSupplier(profile);
+            PlayerSkinWidget skin = new PlayerSkinWidget(60, 144, client.getLoadedEntityModels(), skinSupplier);
+            skin.setPosition(this.width / 2 - 30, 40); // Adjusted position for InfoScreen
             return skin;
         });
 
+        // 2. Fetch the Supabase Tier Data and combine with skin
         TierCache.searchPlayer(username)
-                .thenCombine(skinFuture, (info, skin) -> new PlayerInfoScreen(this, info, skin))
-                .thenAccept(screen -> MinecraftClient.getInstance().execute(() -> MinecraftClient.getInstance().setScreen(screen)))
+                .thenCombine(skinFuture, (info, skin) -> {
+                    if (info == null) throw new RuntimeException("Player not found");
+                    return new PlayerInfoScreen(this, info, skin);
+                })
+                .thenAccept(screen -> client.execute(() -> client.setScreen(screen)))
                 .whenComplete((v, t) -> {
                     if (t != null) {
-                        Ukutils.sendToast(Text.translatable("tiertagger.search.unknown"), null);
+                        client.execute(() -> Ukutils.sendToast(Text.of("Could not find player: " + username), null));
                     }
                     this.searching = false;
                     this.searchButton.setMessage(Text.translatable("tiertagger.search"));
@@ -96,27 +100,13 @@ public class PlayerSearchScreen extends CloseableScreen {
 
     private CompletableFuture<GameProfile> fetchProfile(String username, ApiServices services) {
         CompletableFuture<GameProfile> future = new CompletableFuture<>();
-
         services.profileRepository().findProfilesByNames(new String[]{username}, new ProfileLookupCallback() {
             @Override
-            public void onProfileLookupSucceeded(GameProfile profile) {
-                future.complete(profile);
-            }
-
+            public void onProfileLookupSucceeded(GameProfile profile) { future.complete(profile); }
             @Override
-            public void onProfileLookupFailed(String profileName, Exception exception) {
-                future.completeExceptionally(exception);
-            }
+            public void onProfileLookupFailed(String profileName, Exception exception) { future.completeExceptionally(exception); }
         });
-
         return future;
-    }
-
-    @Override
-    public void resize(MinecraftClient client, int width, int height) {
-        String string = this.textField.getText();
-        this.init(client, width, height);
-        this.textField.setText(string);
     }
 
     @Override
