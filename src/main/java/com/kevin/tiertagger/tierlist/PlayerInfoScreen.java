@@ -2,7 +2,6 @@ package com.kevin.tiertagger.model;
 
 import com.google.gson.reflect.TypeToken;
 import com.kevin.tiertagger.TierTagger;
-import com.kevin.tiertagger.TierCache;
 import com.kevin.tiertagger.config.TierTaggerConfig;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -42,7 +41,12 @@ public record PlayerInfo(String uuid, String ign, String region, int points, Map
     }
 
     public int getRegionColor() {
-        Map<String, Integer> colors = Map.of("NA", 0xff6a6e, "EU", 0x6aff6e, "SA", 0xff9900, "AS", 0xc27ba0);
+        Map<String, Integer> colors = Map.of(
+            "NA", 0xff6a6e, 
+            "EU", 0x6aff6e, 
+            "SA", 0xff9900, 
+            "AS", 0xc27ba0
+        );
         return colors.getOrDefault(this.region != null ? this.region.toUpperCase() : "", 0xffffff);
     }
 
@@ -59,7 +63,9 @@ public record PlayerInfo(String uuid, String ign, String region, int points, Map
         HttpRequest request = HttpRequest.newBuilder(URI.create(config.getApiUrl() + "?" + query))
                 .header("apikey", config.getSupabaseKey())
                 .header("Authorization", "Bearer " + config.getSupabaseKey())
-                .GET().build();
+                .header("Content-Type", "application/json")
+                .GET()
+                .build();
 
         return TierTagger.getClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(r -> {
@@ -69,14 +75,21 @@ public record PlayerInfo(String uuid, String ign, String region, int points, Map
     }
 
     public static String getHighestTier(Map<String, String> tiers) {
-        // Use Map.ofEntries for more than 10 elements
-        Map<String, Integer> weight = new HashMap<>();
-        weight.put("HT1", 40); weight.put("LT1", 32); weight.put("HT2", 24); weight.put("LT2", 20);
-        weight.put("HT3", 16); weight.put("LT3", 12); weight.put("HT4", 8); weight.put("LT4", 4);
-        weight.put("HT5", 2); weight.put("LT5", 1); weight.put("RET", 0);
+        if (tiers == null || tiers.isEmpty()) return null;
 
-        return tiers.entrySet().stream()
-                .max(Comparator.comparingInt(e -> weight.getOrDefault(e.getValue(), -1)))
-                .map(Map.Entry::getValue).orElse(null);
+        // Use Map.ofEntries to bypass the 10-item limit of Map.of()
+        Map<String, Integer> weight = Map.ofEntries(
+            Map.entry("HT1", 40), Map.entry("LT1", 32),
+            Map.entry("HT2", 24), Map.entry("LT2", 20),
+            Map.entry("HT3", 16), Map.entry("LT3", 12),
+            Map.entry("HT4", 8),  Map.entry("LT4", 4),
+            Map.entry("HT5", 2),  Map.entry("LT5", 1),
+            Map.entry("RET", 0)
+        );
+
+        return tiers.values().stream()
+                .filter(weight::containsKey)
+                .max(Comparator.comparingInt(weight::get))
+                .orElse(null);
     }
 }
