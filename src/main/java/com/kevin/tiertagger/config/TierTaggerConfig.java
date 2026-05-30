@@ -18,22 +18,17 @@ import java.util.Optional;
 @AllArgsConstructor
 public class TierTaggerConfig implements Serializable {
     private boolean enabled = true;
-    private String gameMode = "vanilla";
+    private String gameMode = "crystal"; // Changed default to crystal
     private boolean showRetired = true;
     private HighestMode highestMode = HighestMode.NOT_FOUND;
     private boolean showIcons = true;
     private boolean playerList = true;
     private int retiredColor = 0xa2d6ff;
-    // note: this is a GSON internal class. this *might* break in the future
     private LinkedTreeMap<String, Integer> tierColors = defaultColors();
 
-    // === internal stuff ===
-
-    /**
-     * <p>the field was renamed to do a little trolling and force it setting to the default value in players' config</p>
-     * <p>previous name(s): {@code baseUrl}</p>
-     */
-    private String apiUrl = "https://mctiers.com/api";
+    // === Your Supabase Details ===
+    private String apiUrl = "https://zsdtlcyzhcfgcwqucdjd.supabase.co/rest/v1/players";
+    private String supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzZHRsY3l6aGNmZ2N3cXVjZGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDY2MDYsImV4cCI6MjA5MDEyMjYwNn0.IgjMXn3NbVw5nt8CvrJksD4NTEr26nLGwdytUgWFLe0";
 
     public GameMode getGameMode() {
         Optional<GameMode> opt = TierCache.findMode(this.gameMode);
@@ -58,7 +53,7 @@ public class TierTaggerConfig implements Serializable {
         colors.put("LT4", 0x655b79);
         colors.put("HT5", 0x8f82a8);
         colors.put("LT5", 0x655b79);
-
+        colors.put("RET", 0xa2d6ff);
         return colors;
     }
 
@@ -67,8 +62,7 @@ public class TierTaggerConfig implements Serializable {
     public enum HighestMode implements TranslatableOption {
         NEVER(0, "tiertagger.highest.never"),
         NOT_FOUND(1, "tiertagger.highest.not_found"),
-        ALWAYS(2, "tiertagger.highest.always"),
-        ;
+        ALWAYS(2, "tiertagger.highest.always");
 
         private final int id;
         private final String translationKey;
