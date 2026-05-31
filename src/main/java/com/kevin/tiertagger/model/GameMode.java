@@ -1,6 +1,6 @@
 package com.kevin.tiertagger.model;
 
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
