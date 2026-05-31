@@ -1,6 +1,6 @@
 package com.kevin.tiertagger.tierlist;
 
-import com.kevin.tiertagger.TierCache;
+import com.kevin.tiertagger.tier.TierCache;
 import com.kevin.tiertagger.mixin.MinecraftClientAccessor;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.ProfileLookupCallback;
