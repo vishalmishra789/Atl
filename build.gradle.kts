@@ -1,6 +1,6 @@
 plugins {
-    id("net.fabricmc.fabric-loom-remap") version "1.14-SNAPSHOT"
-    id("io.freefair.lombok") version "9.1.0"
+    id("net.fabricmc.loom") version "1.7-SNAPSHOT" // Standard loom version
+    id("io.freefair.lombok") version "8.6"
 }
 
 version = "${project.property("mod_version")}+mc${project.property("minecraft_version")}"
@@ -13,10 +13,13 @@ repositories {
     maven {
         url = uri("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1")
     }
+    // ADDED: Terraformers Maven for Mod Menu
+    maven { 
+        url = uri("https://maven.terraformersmc.com/releases/") 
+    }
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
     minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
     mappings("net.fabricmc:yarn:${project.property("yarn_mappings")}:v2")
     modImplementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
@@ -24,6 +27,9 @@ dependencies {
     modImplementation(fabricApi.module("fabric-command-api-v2", project.property("fabric_api_version") as String))
 
     modApi("net.uku3lig:ukulib:${project.property("ukulib_version")}")
+
+    // ADDED: Mod Menu dependency (Required for UkulibIntegration to compile)
+    modImplementation("com.terraformersmc:modmenu:13.0.4")
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:${project.property("devauth_version")}")
 }
