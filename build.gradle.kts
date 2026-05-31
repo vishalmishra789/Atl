@@ -1,7 +1,7 @@
 plugins {
-    // Standard Loom plugin for Fabric
-    id("net.fabricmc.loom") version "1.7-SNAPSHOT"
-    id("io.freefair.lombok") version "8.6"
+    // RESTORED: This must be exactly what you had before
+    id("net.fabricmc.fabric-loom-remap") version "1.14-SNAPSHOT"
+    id("io.freefair.lombok") version "9.1.0"
 }
 
 version = "${project.property("mod_version")}+mc${project.property("minecraft_version")}"
@@ -29,7 +29,7 @@ dependencies {
 
     modApi("net.uku3lig:ukulib:${project.property("ukulib_version")}")
 
-    // Needed to compile your ModMenu settings button code
+    // Added to fix the "cannot find symbol ModMenuApi" error
     modImplementation("com.terraformersmc:modmenu:13.0.4")
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:${project.property("devauth_version")}")
@@ -61,3 +61,4 @@ tasks.jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
+}
