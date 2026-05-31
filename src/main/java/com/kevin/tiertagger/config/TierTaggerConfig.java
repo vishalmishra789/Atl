@@ -1,7 +1,7 @@
 package com.kevin.tiertagger.config;
 
 import com.google.gson.internal.LinkedTreeMap;
-import com.kevin.tiertagger.TierCache;
+import com.kevin.tiertagger.tier.TierCache;
 import com.kevin.tiertagger.model.GameMode;
 import net.minecraft.util.TranslatableOption;
 
