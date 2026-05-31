@@ -1,4 +1,4 @@
-package com.kevin.tiertagger.tier; // FIXED PACKAGE
+package com.kevin.tiertagger.tier;
 
 import com.google.gson.Gson;
 import com.kevin.tiertagger.config.TierTaggerConfig;
@@ -8,7 +8,7 @@ import net.fabricmc.loader.api.Version;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.uku3lib.ukulib.config.ConfigManager;
+import net.uku3lig.ukulib.config.ConfigManager; // FIXED TYPO HERE (lib -> lig)
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.http.HttpClient;
