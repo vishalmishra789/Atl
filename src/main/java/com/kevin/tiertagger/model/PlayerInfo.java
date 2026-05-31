@@ -1,5 +1,6 @@
 package com.kevin.tiertagger.model;
 
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.kevin.tiertagger.TierTagger;
 import com.kevin.tiertagger.config.TierTaggerConfig;
@@ -11,7 +12,23 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public record PlayerInfo(String uuid, String ign, String region, int points, Map<String, String> tiers) {
+public record PlayerInfo(
+    @SerializedName("id") String uuid, // Matches "id" from your snippet to "uuid" in code
+    String ign, 
+    String region, 
+    int points, 
+    Object tiers // Changed to Object to handle both String and Map formats
+) {
+
+    // Helper to safely get tiers as a Map even if stored as a String in DB
+    public Map<String, String> getTiersMap() {
+        if (tiers instanceof Map) {
+            return (Map<String, String>) tiers;
+        } else if (tiers instanceof String jsonStr) {
+            return TierTagger.GSON.fromJson(jsonStr, new TypeToken<Map<String, String>>(){}.getType());
+        }
+        return Collections.emptyMap();
+    }
 
     public enum PointInfo {
         GRANDMASTER("Combat Grandmaster", 0xE6C622, 0xFDE047),
@@ -48,16 +65,13 @@ public record PlayerInfo(String uuid, String ign, String region, int points, Map
 
     public int getRegionColor() {
         Map<String, Integer> colors = Map.of(
-            "NA", 0xff6a6e, 
-            "EU", 0x6aff6e, 
-            "SA", 0xff9900, 
-            "AS", 0xc27ba0
+            "NA", 0xff6a6e, "EU", 0x6aff6e, "SA", 0xff9900, "AS", 0xc27ba0
         );
         return colors.getOrDefault(this.region != null ? this.region.toUpperCase() : "", 0xffffff);
     }
 
     public static CompletableFuture<PlayerInfo> get(HttpClient client, UUID uuid) {
-        return fetch("uuid=eq." + uuid.toString());
+        return fetch("id=eq." + uuid.toString()); // Changed query from uuid=eq to id=eq
     }
 
     public static CompletableFuture<PlayerInfo> search(HttpClient client, String query) {
@@ -86,16 +100,11 @@ public record PlayerInfo(String uuid, String ign, String region, int points, Map
 
     public static String getHighestTier(Map<String, String> tiers) {
         if (tiers == null || tiers.isEmpty()) return null;
-
         Map<String, Integer> weight = Map.ofEntries(
-            Map.entry("HT1", 40), Map.entry("LT1", 32),
-            Map.entry("HT2", 24), Map.entry("LT2", 20),
-            Map.entry("HT3", 16), Map.entry("LT3", 12),
-            Map.entry("HT4", 8),  Map.entry("LT4", 4),
-            Map.entry("HT5", 2),  Map.entry("LT5", 1),
-            Map.entry("RET", 0)
+            Map.entry("HT1", 40), Map.entry("LT1", 32), Map.entry("HT2", 24), Map.entry("LT2", 20),
+            Map.entry("HT3", 16), Map.entry("LT3", 12), Map.entry("HT4", 8), Map.entry("LT4", 4),
+            Map.entry("HT5", 2), Map.entry("LT5", 1), Map.entry("RET", 0)
         );
-
         return tiers.values().stream()
                 .filter(weight::containsKey)
                 .max(Comparator.comparingInt(weight::get))
