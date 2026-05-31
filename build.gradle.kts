@@ -1,7 +1,7 @@
 plugins {
-    // Reverting to the version that was working in your previous logs
-    id("net.fabricmc.loom") version "1.14-SNAPSHOT"
-    id("io.freefair.lombok") version "9.1.0"
+    // Standard Loom plugin for Fabric
+    id("net.fabricmc.loom") version "1.7-SNAPSHOT"
+    id("io.freefair.lombok") version "8.6"
 }
 
 version = "${project.property("mod_version")}+mc${project.property("minecraft_version")}"
@@ -14,7 +14,7 @@ repositories {
     maven {
         url = uri("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1")
     }
-    // Maven for Mod Menu
+    // Added for Mod Menu
     maven { 
         url = uri("https://maven.terraformersmc.com/releases/") 
     }
@@ -29,7 +29,7 @@ dependencies {
 
     modApi("net.uku3lig:ukulib:${project.property("ukulib_version")}")
 
-    // Mod Menu dependency needed for UkulibIntegration.java
+    // Needed to compile your ModMenu settings button code
     modImplementation("com.terraformersmc:modmenu:13.0.4")
 
     modRuntimeOnly("me.djtheredstoner:DevAuth-fabric:${project.property("devauth_version")}")
@@ -61,4 +61,3 @@ tasks.jar {
     from("LICENSE") {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
-}
