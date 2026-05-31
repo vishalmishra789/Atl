@@ -1,6 +1,6 @@
 package com.kevin.tiertagger.mixin;
 
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import com.kevin.tiertagger.config.TierTaggerConfig;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.client.gui.hud.PlayerListHud;
