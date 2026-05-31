@@ -3,8 +3,6 @@ package com.kevin.tiertagger.model;
 import com.google.gson.reflect.TypeToken;
 import com.kevin.tiertagger.TierTagger;
 import com.kevin.tiertagger.config.TierTaggerConfig;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -22,8 +20,6 @@ public record PlayerInfo(
 ) {
 
     // --- YOUR SERVER'S POINT SYSTEM ---
-    @Getter
-    @AllArgsConstructor
     public enum PointInfo {
         GRANDMASTER("Combat Grandmaster", 0xE6C622, 0xFDE047), // Gold
         MASTER("Combat Master", 0xFBB03B, 0xFFD13A),           // Orange
@@ -36,6 +32,17 @@ public record PlayerInfo(
         private final String title;
         private final int color;
         private final int accentColor;
+
+        // Manual constructor fixes "constructor cannot be applied to given types"
+        PointInfo(String title, int color, int accentColor) {
+            this.title = title;
+            this.color = color;
+            this.accentColor = accentColor;
+        }
+
+        public String getTitle() { return title; }
+        public int getColor() { return color; }
+        public int getAccentColor() { return accentColor; }
     }
 
     public PointInfo getPointInfo() {
@@ -47,7 +54,7 @@ public record PlayerInfo(
         return PointInfo.CADET;
     }
 
-    // --- REGION COLORS (Kept for AS region support) ---
+    // --- REGION COLORS ---
     private static final Map<String, Integer> REGION_COLORS = Map.of(
             "NA", 0xff6a6e, "EU", 0x6aff6e, "SA", 0xff9900,
             "AU", 0xf6b26b, "ME", 0xffd966, "AS", 0xc27ba0, "AF", 0x674ea7
@@ -61,7 +68,6 @@ public record PlayerInfo(
 
     private static HttpRequest createSupabaseRequest(String query) {
         TierTaggerConfig config = TierTagger.getManager().getConfig();
-        // Updated URL for Supabase filtering
         String url = config.getApiUrl() + "?" + query;
         
         return HttpRequest.newBuilder(URI.create(url))
@@ -77,12 +83,12 @@ public record PlayerInfo(
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
-                    // Supabase returns a List [], so we take the first element
                     List<PlayerInfo> list = TierTagger.GSON.fromJson(response.body(), new TypeToken<List<PlayerInfo>>(){}.getType());
                     return (list != null && !list.isEmpty()) ? list.get(0) : null;
                 })
-                .whenComplete((i, t) -> {
-                    if (t != null) TierTagger.getLogger().warn("Error getting player info from Supabase ({})", uuid, t);
+                .exceptionally(t -> {
+                    TierTagger.getLogger().warn("Error getting player info from Supabase ({})", uuid, t);
+                    return null;
                 });
     }
 
@@ -98,20 +104,22 @@ public record PlayerInfo(
 
     // --- TIER DATA HELPERS ---
 
-    /**
-     * Gets the tier string (e.g. "HT1") for the currently selected gamemode.
-     */
     public String getTierValue(String gameModeId) {
         if (this.tiers == null) return null;
-        return this.tiers.get(gameModeId); // Directly returns "HT1", "LT3", etc.
+        return this.tiers.get(gameModeId);
     }
 
-    // This helper determines which tier is "Highest" based on your point map
     public static String getHighestTier(Map<String, String> tiers) {
-        Map<String, Integer> weight = Map.of(
-            "HT1", 40, "LT1", 32, "HT2", 24, "LT2", 20, 
-            "HT3", 16, "LT3", 12, "HT4", 8, "LT4", 4, 
-            "HT5", 2, "LT5", 1, "RET", 0
+        if (tiers == null || tiers.isEmpty()) return null;
+
+        // Use Map.ofEntries because Map.of() fails with more than 10 arguments
+        Map<String, Integer> weight = Map.ofEntries(
+            Map.entry("HT1", 40), Map.entry("LT1", 32), 
+            Map.entry("HT2", 24), Map.entry("LT2", 20), 
+            Map.entry("HT3", 16), Map.entry("LT3", 12), 
+            Map.entry("HT4", 8),  Map.entry("LT4", 4), 
+            Map.entry("HT5", 2),  Map.entry("LT5", 1), 
+            Map.entry("RET", 0)
         );
 
         return tiers.values().stream()
