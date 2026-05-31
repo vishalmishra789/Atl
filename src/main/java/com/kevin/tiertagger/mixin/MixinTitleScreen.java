@@ -1,6 +1,6 @@
 package com.kevin.tiertagger.mixin;
 
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.minecraft.client.MinecraftClient;
