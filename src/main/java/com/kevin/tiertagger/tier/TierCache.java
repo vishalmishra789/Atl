@@ -1,4 +1,4 @@
-package com.kevin.tiertagger;
+package com.kevin.tiertagger.tier;
 
 import com.kevin.tiertagger.model.GameMode;
 import com.kevin.tiertagger.model.PlayerInfo;
