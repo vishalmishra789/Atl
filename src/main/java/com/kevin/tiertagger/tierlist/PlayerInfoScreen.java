@@ -1,95 +1,51 @@
-package com.kevin.tiertagger.model;
+package com.kevin.tiertagger.tierlist;
 
-import com.google.gson.reflect.TypeToken;
-import com.kevin.tiertagger.TierTagger;
-import com.kevin.tiertagger.config.TierTaggerConfig;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.kevin.tiertagger.model.PlayerInfo;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.SkinTextures;
+import net.minecraft.text.Text;
+import java.util.Map;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+public class PlayerInfoScreen extends Screen {
+    private final Screen parent;
+    private final PlayerInfo info;
+    private final SkinTextures skin;
 
-public record PlayerInfo(String uuid, String ign, String region, int points, Map<String, String> tiers) {
-
-    @Getter
-    @AllArgsConstructor
-    public enum PointInfo {
-        GRANDMASTER("Combat Grandmaster", 0xE6C622, 0xFDE047),
-        MASTER("Combat Master", 0xFBB03B, 0xFFD13A),
-        ELITE("Combat Elite", 0xCD285C, 0xD65474),
-        VETERAN("Combat Veteran", 0xAD78D8, 0xC7A3E8),
-        APPRENTICE("Apprentice", 0x9291D9, 0xADACE2),
-        CADET("Combat Cadet", 0x6C7178, 0x8B979C),
-        UNRANKED("Unranked", 0xFFFFFF, 0xFFFFFF);
-
-        private final String title;
-        private final int color;
-        private final int accentColor;
+    public PlayerInfoScreen(Screen parent, PlayerInfo info, SkinTextures skin) {
+        super(Text.literal("Player Info: " + info.ign()));
+        this.parent = parent;
+        this.info = info;
+        this.skin = skin;
     }
 
-    public PointInfo getPointInfo() {
-        if (this.points >= 280) return PointInfo.GRANDMASTER;
-        if (this.points >= 200) return PointInfo.MASTER;
-        if (this.points >= 120) return PointInfo.ELITE;
-        if (this.points >= 60)  return PointInfo.VETERAN;
-        if (this.points >= 20)  return PointInfo.APPRENTICE;
-        return PointInfo.CADET;
+    @Override
+    protected void init() {
+        // Add buttons like "Back" here
     }
 
-    public int getRegionColor() {
-        Map<String, Integer> colors = Map.of(
-            "NA", 0xff6a6e, 
-            "EU", 0x6aff6e, 
-            "SA", 0xff9900, 
-            "AS", 0xc27ba0
-        );
-        return colors.getOrDefault(this.region != null ? this.region.toUpperCase() : "", 0xffffff);
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackground(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
+        
+        int x = this.width / 2;
+        int y = this.height / 2;
+
+        // Example: Render player name and points
+        context.drawCenteredTextWithShadow(this.textRenderer, info.ign(), x, y - 50, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, "Points: " + info.points(), x, y - 30, 0xAAAAAA);
+        
+        // Render Region
+        if (info.region() != null) {
+            context.drawCenteredTextWithShadow(this.textRenderer, "Region: " + info.region(), x, y - 10, info.getRegionColor());
+        }
     }
 
-    public static CompletableFuture<PlayerInfo> get(HttpClient client, UUID uuid) {
-        return fetch("uuid=eq." + uuid.toString());
-    }
-
-    public static CompletableFuture<PlayerInfo> search(HttpClient client, String query) {
-        return fetch("ign=ilike." + query);
-    }
-
-    private static CompletableFuture<PlayerInfo> fetch(String query) {
-        TierTaggerConfig config = TierTagger.getManager().getConfig();
-        HttpRequest request = HttpRequest.newBuilder(URI.create(config.getApiUrl() + "?" + query))
-                .header("apikey", config.getSupabaseKey())
-                .header("Authorization", "Bearer " + config.getSupabaseKey())
-                .header("Content-Type", "application/json")
-                .GET()
-                .build();
-
-        return TierTagger.getClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(r -> {
-                    List<PlayerInfo> list = TierTagger.GSON.fromJson(r.body(), new TypeToken<List<PlayerInfo>>(){}.getType());
-                    return (list != null && !list.isEmpty()) ? list.get(0) : null;
-                });
-    }
-
-    public static String getHighestTier(Map<String, String> tiers) {
-        if (tiers == null || tiers.isEmpty()) return null;
-
-        // Use Map.ofEntries to bypass the 10-item limit of Map.of()
-        Map<String, Integer> weight = Map.ofEntries(
-            Map.entry("HT1", 40), Map.entry("LT1", 32),
-            Map.entry("HT2", 24), Map.entry("LT2", 20),
-            Map.entry("HT3", 16), Map.entry("LT3", 12),
-            Map.entry("HT4", 8),  Map.entry("LT4", 4),
-            Map.entry("HT5", 2),  Map.entry("LT5", 1),
-            Map.entry("RET", 0)
-        );
-
-        return tiers.values().stream()
-                .filter(weight::containsKey)
-                .max(Comparator.comparingInt(weight::get))
-                .orElse(null);
+    @Override
+    public void close() {
+        if (this.client != null) {
+            this.client.setScreen(this.parent);
+        }
     }
 }
