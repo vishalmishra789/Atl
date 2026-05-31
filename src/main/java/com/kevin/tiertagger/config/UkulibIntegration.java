@@ -1,13 +1,14 @@
 package com.kevin.tiertagger.config;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.uku3lig.ukulib.api.UkulibAPI;
+import com.terraformersmc.modmenu.api.ConfigScreenFactory;
+import com.terraformersmc.modmenu.api.ModMenuApi; // Make sure this import is here
 
-import java.util.function.UnaryOperator;
+// YOU MUST ADD: implements ModMenuApi
+public class UkulibIntegration implements ModMenuApi {
 
-public class UkulibIntegration implements UkulibAPI {
     @Override
-    public UnaryOperator<Screen> supplyConfigScreen() {
-        return TTConfigScreen::new;
+    public ConfigScreenFactory<?> getModConfigScreenFactory() {
+        // This links your config screen to the ModMenu button
+        return parent -> new TTConfigScreen(parent); 
     }
 }
