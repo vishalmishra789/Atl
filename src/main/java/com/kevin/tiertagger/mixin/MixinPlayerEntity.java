@@ -1,6 +1,6 @@
 package com.kevin.tiertagger.mixin;
 
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
