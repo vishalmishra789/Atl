@@ -32,7 +32,7 @@ public class TierCache {
     public static Optional<Map<String, String>> getPlayerRankings(UUID uuid) {
         return TIERS.computeIfAbsent(uuid, u -> {
             PlayerInfo.get(null, uuid).thenAccept(p -> {
-                if (p != null) TIERS.put(uuid, Optional.of(p.tiers()));
+                if (p != null) TIERS.put(uuid, Optional.of(p.getTiersMap()));
             });
             return Optional.empty();
         });
