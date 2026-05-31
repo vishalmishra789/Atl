@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.kevin.tiertagger.config.TierTaggerConfig;
 import com.kevin.tiertagger.model.PlayerInfo;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer; // ADDED THIS
 import net.fabricmc.loader.api.Version;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
@@ -15,10 +16,8 @@ import java.net.http.HttpClient;
 import java.util.Optional;
 import java.util.UUID;
 
-// We add this to be 100% sure the compiler finds it
-import com.kevin.tiertagger.tier.TierCache; 
-
-public class TierTagger implements ModInitializer {
+// IMPLEMENT BOTH ModInitializer AND ClientModInitializer
+public class TierTagger implements ModInitializer, ClientModInitializer {
     public static final String MOD_ID = "tiertagger";
     public static final Gson GSON = new Gson();
 
@@ -29,6 +28,13 @@ public class TierTagger implements ModInitializer {
     @Override 
     public void onInitialize() { 
         TierCache.init(); 
+    }
+
+    // ADD THIS METHOD TO FIX THE CRASH
+    @Override
+    public void onInitializeClient() {
+        // This is called during client startup
+        // You can leave it empty or move TierCache.init() here if you want
     }
 
     public static ConfigManager<TierTaggerConfig> getManager() {
