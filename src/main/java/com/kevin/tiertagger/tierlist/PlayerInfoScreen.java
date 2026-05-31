@@ -5,7 +5,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Text;
-import java.util.Map;
 
 public class PlayerInfoScreen extends Screen {
     private final Screen parent;
@@ -13,7 +12,7 @@ public class PlayerInfoScreen extends Screen {
     private final SkinTextures skin;
 
     public PlayerInfoScreen(Screen parent, PlayerInfo info, SkinTextures skin) {
-        super(Text.literal("Player Info: " + info.ign()));
+        super(Text.literal("Player Info"));
         this.parent = parent;
         this.info = info;
         this.skin = skin;
@@ -21,7 +20,7 @@ public class PlayerInfoScreen extends Screen {
 
     @Override
     protected void init() {
-        // Add buttons like "Back" here
+        // Any buttons or extra labels go here
     }
 
     @Override
@@ -32,13 +31,16 @@ public class PlayerInfoScreen extends Screen {
         int x = this.width / 2;
         int y = this.height / 2;
 
-        // Example: Render player name and points
-        context.drawCenteredTextWithShadow(this.textRenderer, info.ign(), x, y - 50, 0xFFFFFF);
-        context.drawCenteredTextWithShadow(this.textRenderer, "Points: " + info.points(), x, y - 30, 0xAAAAAA);
+        context.drawCenteredTextWithShadow(this.textRenderer, info.ign(), x, y - 60, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, "Points: " + info.points(), x, y - 40, 0xAAAAAA);
         
-        // Render Region
         if (info.region() != null) {
-            context.drawCenteredTextWithShadow(this.textRenderer, "Region: " + info.region(), x, y - 10, info.getRegionColor());
+            context.drawCenteredTextWithShadow(this.textRenderer, "Region: " + info.region(), x, y - 20, info.getRegionColor());
+        }
+        
+        // Render the player face using the skin textures data
+        if (skin != null) {
+            context.drawTexture(skin.texture(), x - 16, y, 32, 32, 32, 32, 32, 32, 256, 256);
         }
     }
 
