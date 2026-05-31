@@ -8,12 +8,15 @@ import net.fabricmc.loader.api.Version;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.uku3lig.ukulib.config.ConfigManager; // FIXED TYPO HERE (lib -> lig)
+import net.uku3lig.ukulib.config.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.http.HttpClient;
 import java.util.Optional;
 import java.util.UUID;
+
+// We add this to be 100% sure the compiler finds it
+import com.kevin.tiertagger.tier.TierCache; 
 
 public class TierTagger implements ModInitializer {
     public static final String MOD_ID = "tiertagger";
