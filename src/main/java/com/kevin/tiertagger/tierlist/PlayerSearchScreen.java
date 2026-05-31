@@ -10,20 +10,17 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.PlayerSkinWidget;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.ApiServices;
-import net.uku3lig.ukulib.config.option.widget.TextInputWidget;
-import net.uku3lig.ukulib.config.screen.CloseableScreen;
-import net.uku3lig.ukulib.utils.Ukutils;
+import net.uku3libs.ukulib.config.option.widget.TextInputWidget;
+import net.uku3libs.ukulib.config.screen.CloseableScreen;
+import net.uku3libs.ukulib.utils.Ukutils;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 public class PlayerSearchScreen extends CloseableScreen {
     private TextInputWidget textField;
@@ -70,25 +67,23 @@ public class PlayerSearchScreen extends CloseableScreen {
         YggdrasilAuthenticationService service = ((MinecraftClientAccessor) client).getAuthenticationService();
         ApiServices services = ApiServices.create(service, client.runDirectory);
 
-        // 1. Fetch the Minecraft Skin asynchronously
-        CompletableFuture<PlayerSkinWidget> skinFuture = fetchProfile(username, services).thenApply(p -> {
+        // Fetch Skin textures as data
+        CompletableFuture<SkinTextures> skinFuture = fetchProfile(username, services).thenApply(p -> {
             GameProfile profile = Optional.ofNullable(services.sessionService().fetchProfile(p.getId(), true))
                     .map(ProfileResult::profile)
                     .orElseGet(() -> new GameProfile(p.getId(), username));
 
-            Supplier<SkinTextures> skinSupplier = client.getSkinProvider().getSkinTexturesSupplier(profile);
-            PlayerSkinWidget skin = new PlayerSkinWidget(60, 144, client.getLoadedEntityModels(), skinSupplier);
-            skin.setPosition(this.width / 2 - 30, 40); // Adjusted position for InfoScreen
-            return skin;
+            return client.getSkinProvider().getSkinTextures(profile);
         });
 
-        // 2. Fetch the Supabase Tier Data and combine with skin
+        // Combine Supabase Info + Skin Data
         TierCache.searchPlayer(username)
                 .thenCombine(skinFuture, (info, skin) -> {
                     if (info == null) throw new RuntimeException("Player not found");
-                    return new PlayerInfoScreen(this, info, skin);
+                    // Pass the Screen parent, info data, and skin data
+                    return (Screen) new PlayerInfoScreen(this, info, skin);
                 })
-                .thenAccept(screen -> client.execute(() -> client.setScreen(screen)))
+                .thenAccept(screen -> client.execute(() -> client.setScreen((Screen) screen)))
                 .whenComplete((v, t) -> {
                     if (t != null) {
                         client.execute(() -> Ukutils.sendToast(Text.of("Could not find player: " + username), null));
