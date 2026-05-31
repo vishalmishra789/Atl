@@ -15,9 +15,9 @@ import net.minecraft.client.util.SkinTextures;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.ApiServices;
-import net.uku3libs.ukulib.config.option.widget.TextInputWidget;
-import net.uku3libs.ukulib.config.screen.CloseableScreen;
-import net.uku3libs.ukulib.utils.Ukutils;
+import net.uku3lig.ukulib.config.option.widget.TextInputWidget;
+import net.uku3lig.ukulib.config.screen.CloseableScreen;
+import net.uku3lig.ukulib.utils.Ukutils;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -67,7 +67,6 @@ public class PlayerSearchScreen extends CloseableScreen {
         YggdrasilAuthenticationService service = ((MinecraftClientAccessor) client).getAuthenticationService();
         ApiServices services = ApiServices.create(service, client.runDirectory);
 
-        // Fetch Skin textures as data
         CompletableFuture<SkinTextures> skinFuture = fetchProfile(username, services).thenApply(p -> {
             GameProfile profile = Optional.ofNullable(services.sessionService().fetchProfile(p.getId(), true))
                     .map(ProfileResult::profile)
@@ -76,14 +75,12 @@ public class PlayerSearchScreen extends CloseableScreen {
             return client.getSkinProvider().getSkinTextures(profile);
         });
 
-        // Combine Supabase Info + Skin Data
         TierCache.searchPlayer(username)
                 .thenCombine(skinFuture, (info, skin) -> {
                     if (info == null) throw new RuntimeException("Player not found");
-                    // Pass the Screen parent, info data, and skin data
                     return (Screen) new PlayerInfoScreen(this, info, skin);
                 })
-                .thenAccept(screen -> client.execute(() -> client.setScreen((Screen) screen)))
+                .thenAccept(screen -> client.execute(() -> client.setScreen(screen)))
                 .whenComplete((v, t) -> {
                     if (t != null) {
                         client.execute(() -> Ukutils.sendToast(Text.of("Could not find player: " + username), null));
