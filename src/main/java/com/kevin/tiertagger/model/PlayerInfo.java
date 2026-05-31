@@ -2,7 +2,7 @@ package com.kevin.tiertagger.model;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import com.kevin.tiertagger.config.TierTaggerConfig;
 
 import java.net.URI;
