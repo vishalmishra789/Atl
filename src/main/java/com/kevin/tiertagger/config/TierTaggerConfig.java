@@ -23,7 +23,6 @@ public class TierTaggerConfig implements Serializable {
 
     public TierTaggerConfig() {}
 
-    // --- Manual Getters and Setters (Fixes "cannot find symbol" errors) ---
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
@@ -94,8 +93,9 @@ public class TierTaggerConfig implements Serializable {
         }
 
         @Override
-        public String getTranslationKey() {
-            return translationKey;
-        }
+        public int getId() { return id; } // Added this mandatory method
+
+        @Override
+        public String getTranslationKey() { return translationKey; }
     }
 }
