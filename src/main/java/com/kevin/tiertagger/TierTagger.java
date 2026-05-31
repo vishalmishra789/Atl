@@ -1,4 +1,4 @@
-package com.kevin.tiertagger;
+package com.kevin.tiertagger.tier; // FIXED PACKAGE
 
 import com.google.gson.Gson;
 import com.kevin.tiertagger.config.TierTaggerConfig;
@@ -8,7 +8,7 @@ import net.fabricmc.loader.api.Version;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.uku3lig.ukulib.config.ConfigManager;
+import net.uku3lib.ukulib.config.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.http.HttpClient;
@@ -28,7 +28,6 @@ public class TierTagger implements ModInitializer {
         TierCache.init(); 
     }
 
-    // Manual static getters to ensure Mixins and other classes can see them
     public static ConfigManager<TierTaggerConfig> getManager() {
         return manager;
     }
