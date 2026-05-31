@@ -1,38 +1,31 @@
 package com.kevin.tiertagger.model;
 
+import net.minecraft.util.Identifier;
 import java.util.Arrays;
 import java.util.Optional;
 
 public enum TierList {
-    ARISE_CORE("AriseCore", "https://zsdtlcyzhcfgcwqucdjd.supabase.co/rest/v1/players", '\uE901');
+    // We changed the name and removed the 'char' icon in favor of an image Identifier
+    ARISE_CORE("Arise Tier List", 
+               "https://zsdtlcyzhcfgcwqucdjd.supabase.co/rest/v1/players", 
+               Identifier.of("tiertagger", "textures/gui/logo.png"));
 
     private final String name;
     private final String url;
-    private final char icon;
+    private final Identifier iconPath;
 
-    // Manual constructor (Fixes the "cannot be applied to given types" error)
-    TierList(String name, String url, char icon) {
+    TierList(String name, String url, Identifier iconPath) {
         this.name = name;
         this.url = url;
-        this.icon = icon;
+        this.iconPath = iconPath;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public char getIcon() {
-        return icon;
-    }
+    public String getName() { return name; }
+    public String getUrl() { return url; }
+    public Identifier getIconPath() { return iconPath; }
 
     public String styledName(boolean current) {
-        String s = icon + " " + name;
-        if (current) s += " (Selected)";
-        return s;
+        return current ? name + " (Selected)" : name;
     }
 
     public static Optional<TierList> findByUrl(String url) {
