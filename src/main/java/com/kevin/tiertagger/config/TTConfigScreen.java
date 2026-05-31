@@ -1,7 +1,7 @@
 package com.kevin.tiertagger.config;
 
 import com.kevin.tiertagger.TierCache;
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import com.kevin.tiertagger.model.TierList;
 import com.kevin.tiertagger.tierlist.PlayerSearchScreen;
 import net.minecraft.client.gui.screen.Screen;
