@@ -1,6 +1,6 @@
 package com.kevin.tiertagger.mixin;
 
-import com.kevin.tiertagger.TierTagger;
+import com.kevin.tiertagger.tier.TierTagger;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.DisplayEntityRenderer;
 import net.minecraft.client.render.entity.state.TextDisplayEntityRenderState;
