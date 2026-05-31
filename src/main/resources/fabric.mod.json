@@ -3,13 +3,38 @@
   "id": "tier-tagger",
   "version": "${version}",
   "name": "Arise Tier Tagger",
-  "description": "A Minecraft Fabric mod that displays player PvP tiers from Arise TierList directly in their nametags..",
-  "author": [
-    "v1shal"
+  "description": "The official Tier Tagger for Arise PvP. View player rankings, tiers, and combat statistics directly in-game.",
+  "authors": [
+    "v1shal",
+    "zoldyk",
+    "AriseTier Team"
   ],
   "contact": {
-    "homepage": "https://arisetierlist.netlify.app/",
+    "homepage": "https://your-website.com",
     "sources": "https://github.com/vishalmishra789/Atl"
   },
-  "icon": "assets/tiertagger/icon.png"
+  "license": "MPL-2.0",
+  "icon": "assets/tiertagger/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.kevin.tiertagger.TierTagger"
+    ],
+    "client": [
+      "com.kevin.tiertagger.TierTagger"
+    ],
+    "modmenu": [
+      "com.kevin.tiertagger.UkulibIntegration"
+    ]
+  },
+  "mixins": [
+    "tiertagger.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*",
+    "ukulib": ">=1.6.0"
+  }
 }
