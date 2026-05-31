@@ -2,9 +2,7 @@ package com.kevin.tiertagger;
 
 import com.google.gson.Gson;
 import com.kevin.tiertagger.config.TierTaggerConfig;
-import com.kevin.tiertagger.model.GameMode;
 import com.kevin.tiertagger.model.PlayerInfo;
-import lombok.Getter;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.Version;
 import net.minecraft.text.MutableText;
@@ -21,11 +19,27 @@ public class TierTagger implements ModInitializer {
     public static final String MOD_ID = "tiertagger";
     public static final Gson GSON = new Gson();
 
-    @Getter private static final ConfigManager<TierTaggerConfig> manager = ConfigManager.createDefault(TierTaggerConfig.class, MOD_ID);
-    @Getter private static final Logger logger = LoggerFactory.getLogger(TierTagger.class);
-    @Getter private static final HttpClient client = HttpClient.newHttpClient();
+    private static final ConfigManager<TierTaggerConfig> manager = ConfigManager.createDefault(TierTaggerConfig.class, MOD_ID);
+    private static final Logger logger = LoggerFactory.getLogger(TierTagger.class);
+    private static final HttpClient client = HttpClient.newHttpClient();
 
-    @Override public void onInitialize() { TierCache.init(); }
+    @Override 
+    public void onInitialize() { 
+        TierCache.init(); 
+    }
+
+    // Manual static getters to ensure Mixins and other classes can see them
+    public static ConfigManager<TierTaggerConfig> getManager() {
+        return manager;
+    }
+
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    public static HttpClient getClient() {
+        return client;
+    }
 
     public static Text appendTier(UUID uuid, Text text) {
         return getPlayerTier(uuid).map(tierStr -> {
@@ -45,7 +59,6 @@ public class TierTagger implements ModInitializer {
         return manager.getConfig().getTierColors().getOrDefault(tier, 0xD3D3D3);
     }
 
-    // Dummy methods for Mixin compatibility
     public static Version getLatestVersion() { return null; }
     public static boolean isObsolete() { return false; }
 }
